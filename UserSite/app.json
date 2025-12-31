@@ -1,13 +1,16 @@
 {
   "expo": {
-    "name": "gameBlog",
-    "slug": "gameBlog",
+    "name": "UserSite",
+    "slug": "usersite-shop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "gameblog",
+    "scheme": "usersite",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "updates": {
+      "enabled": false
+    },
     "ios": {
       "supportsTablet": true
     },

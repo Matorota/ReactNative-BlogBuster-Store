@@ -1,12 +1,66 @@
-import { Text, View } from "react-native";
+// @ts-nocheck
+import { Text, View, Pressable, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
 
 export default function Index() {
+  const router = useRouter();
+
   return (
-    <View className="flex-1 justify-center items-center bg-gray-100">
-      <View className="w-64 h-40 bg-blue-500 rounded-lg shadow-lg border-2 border-blue-700 justify-center items-center mb-4">
-        <Text className="text-white font-bold text-lg">NativeWind Box</Text>
-        <Text className="text-blue-100 text-sm mt-2">Tailwind is working!</Text>
+    <View style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Admin Panel</Text>
+
+        <Pressable
+          onPress={() => router.push("/products")}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>Manage Products</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push("/checkout")}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>Checkout Scanner</Text>
+        </Pressable>
+
+        <Pressable onPress={() => router.push("/orders")} style={styles.button}>
+          <Text style={styles.buttonText}>View Orders</Text>
+        </Pressable>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#111827",
+  },
+  content: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  title: {
+    color: "#FFFFFF",
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 48,
+  },
+  button: {
+    backgroundColor: "#1F2937",
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    width: 256,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+});
