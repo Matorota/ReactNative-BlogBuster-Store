@@ -15,6 +15,7 @@ import { Product, ShoppingCart, CartItem } from "../types";
 
 export const productsCollection = collection(db, "products");
 export const cartsCollection = collection(db, "carts");
+export const ordersCollection = collection(db, "orders");
 
 export const addProduct = async (product: Omit<Product, "id">) => {
   const docRef = await addDoc(productsCollection, product);
@@ -24,6 +25,21 @@ export const addProduct = async (product: Omit<Product, "id">) => {
 export const updateProduct = async (id: string, product: Partial<Product>) => {
   const docRef = doc(db, "products", id);
   await updateDoc(docRef, product as any);
+};
+
+export const reduceProductStock = async (
+  productId: string,
+  quantity: number
+) => {
+  const docRef = doc(db, "products", productId);
+  const snapshot = await getDoc(docRef);
+  if (snapshot.exists()) {
+    const product = snapshot.data() as Product;
+    if (product.stock !== undefined) {
+      const newStock = Math.max(0, product.stock - quantity);
+      await updateDoc(docRef, { stock: newStock });
+    }
+  }
 };
 
 export const deleteProduct = async (id: string) => {
@@ -105,4 +121,17 @@ export const listenToCarts = (callback: (carts: ShoppingCart[]) => void) => {
     );
     callback(carts);
   });
+};
+
+export const createOrder = async (cart: ShoppingCart) => {
+  const order = {
+    userId: cart.userId,
+    items: cart.items,
+    totalPrice: cart.totalPrice,
+    status: "completed",
+    createdAt: new Date(),
+    completedAt: new Date(),
+  };
+  const docRef = await addDoc(ordersCollection, order);
+  return docRef.id;
 };

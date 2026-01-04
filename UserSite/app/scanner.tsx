@@ -55,6 +55,16 @@ export default function Scanner() {
         return;
       }
 
+      // Check if product is in stock
+      if (product.stock !== undefined && product.stock <= 0) {
+        Alert.alert(
+          "Out of Stock",
+          `${product.name} is currently out of stock`
+        );
+        setTimeout(() => setScanned(false), 2000);
+        return;
+      }
+
       if (cart) {
         const existingItemIndex = cart.items.findIndex(
           (item) => item.product.id === product.id
@@ -62,6 +72,21 @@ export default function Scanner() {
 
         let newItems: CartItem[];
         if (existingItemIndex >= 0) {
+          const currentQuantity = cart.items[existingItemIndex].quantity;
+
+          // Check if adding one more would exceed stock
+          if (
+            product.stock !== undefined &&
+            currentQuantity + 1 > product.stock
+          ) {
+            Alert.alert(
+              "Stock Limit Reached",
+              `Only ${product.stock} units of ${product.name} available`
+            );
+            setTimeout(() => setScanned(false), 2000);
+            return;
+          }
+
           newItems = [...cart.items];
           newItems[existingItemIndex].quantity += 1;
         } else {

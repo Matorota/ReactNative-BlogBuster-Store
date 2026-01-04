@@ -28,6 +28,7 @@ export default function Products() {
     price: "",
     barcode: "",
     ageRestriction: "",
+    stock: "",
   });
 
   useEffect(() => {
@@ -60,11 +61,21 @@ export default function Products() {
       }
     }
 
+    let stock: number | undefined;
+    if (formData.stock) {
+      stock = parseInt(formData.stock);
+      if (isNaN(stock) || stock < 0) {
+        Alert.alert("Error", "Stock must be a valid number");
+        return;
+      }
+    }
+
     const productData = {
       name: formData.name,
       price,
       barcode: formData.barcode,
       ageRestriction,
+      stock,
     };
 
     try {
@@ -102,6 +113,7 @@ export default function Products() {
       price: product.price.toString(),
       barcode: product.barcode,
       ageRestriction: product.ageRestriction?.toString() || "",
+      stock: product.stock?.toString() || "",
     });
     setShowForm(true);
   };
@@ -112,7 +124,13 @@ export default function Products() {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", price: "", barcode: "", ageRestriction: "" });
+    setFormData({
+      name: "",
+      price: "",
+      barcode: "",
+      ageRestriction: "",
+      stock: "",
+    });
     setEditingProduct(null);
     setShowForm(false);
   };
@@ -172,6 +190,18 @@ export default function Products() {
             placeholderTextColor="#6B7280"
           />
 
+          <Text style={styles.label}>Stock (Optional)</Text>
+          <TextInput
+            value={formData.stock}
+            onChangeText={(text: string) =>
+              setFormData({ ...formData, stock: text })
+            }
+            style={styles.input}
+            placeholder="0"
+            keyboardType="number-pad"
+            placeholderTextColor="#6B7280"
+          />
+
           <Pressable onPress={handleSubmit} style={styles.saveButton}>
             <Text style={styles.saveButtonText}>
               {editingProduct ? "Update Product" : "Add Product"}
@@ -202,6 +232,17 @@ export default function Products() {
               {product.ageRestriction && (
                 <Text style={styles.productAge}>
                   Age {product.ageRestriction}+
+                </Text>
+              )}
+              {product.stock !== undefined && (
+                <Text
+                  style={[
+                    styles.productStock,
+                    product.stock === 0 && styles.outOfStock,
+                  ]}
+                >
+                  Stock: {product.stock}{" "}
+                  {product.stock === 0 && "(Out of Stock)"}
                 </Text>
               )}
             </View>
@@ -337,6 +378,15 @@ const styles = StyleSheet.create({
     color: "#FBBF24",
     fontSize: 12,
     marginTop: 4,
+  },
+  productStock: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  outOfStock: {
+    color: "#EF4444",
+    fontWeight: "600",
   },
   productActions: {
     flexDirection: "row",

@@ -35,7 +35,17 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   const doc = snapshot.docs[0];
-  return { id: doc.id, ...doc.data() } as User;
+  const data = doc.data();
+  return {
+    id: doc.id,
+    ...data,
+    createdAt: data.createdAt?.toDate
+      ? data.createdAt.toDate()
+      : data.createdAt,
+    dateOfBirth: data.dateOfBirth?.toDate
+      ? data.dateOfBirth.toDate()
+      : data.dateOfBirth,
+  } as User;
 };
 
 export const getUser = async (id: string): Promise<User | null> => {

@@ -19,6 +19,7 @@ export default function Register() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
     dateOfBirth: "",
   });
   const [loading, setLoading] = useState(false);
@@ -61,6 +62,11 @@ export default function Register() {
       return;
     }
 
+    if (!formData.password || formData.password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters");
+      return;
+    }
+
     if (!validateDate(formData.dateOfBirth)) {
       Alert.alert(
         "Error",
@@ -84,6 +90,7 @@ export default function Register() {
       const userId = await createUser({
         name: formData.name.trim(),
         email: formData.email.toLowerCase().trim(),
+        password: formData.password,
         dateOfBirth: new Date(year, month - 1, day),
       });
 
@@ -141,6 +148,21 @@ export default function Register() {
               placeholderTextColor="#6B7280"
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.password}
+              onChangeText={(text) =>
+                setFormData({ ...formData, password: text })
+              }
+              placeholder="******"
+              placeholderTextColor="#6B7280"
+              secureTextEntry
               editable={!loading}
             />
           </View>

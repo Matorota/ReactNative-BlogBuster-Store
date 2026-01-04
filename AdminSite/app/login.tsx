@@ -11,68 +11,31 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
-import { getUserByEmail } from "../services/firebase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function Login() {
+export default function AdminLogin() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
   const handleLogin = async () => {
-    if (!validateEmail(email)) {
-      Alert.alert("Error", "Please enter a valid email address");
-      return;
-    }
-
-    if (!password) {
-      Alert.alert("Error", "Please enter your password");
+    if (!username || !password) {
+      Alert.alert("Error", "Please enter username and password");
       return;
     }
 
     setLoading(true);
-    try {
-      const user = await getUserByEmail(email);
 
-      if (!user) {
-        Alert.alert(
-          "Account Not Found",
-          "No account exists with this email. Would you like to create one?",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Register",
-              onPress: () => router.push("/register"),
-            },
-          ]
-        );
-        setLoading(false);
-        return;
-      }
-
-      // Verify password
-      if (user.password !== password) {
-        Alert.alert("Error", "Incorrect password");
-        setLoading(false);
-        return;
-      }
-
-      // Save user session
-      await AsyncStorage.setItem("userId", user.id);
-      await AsyncStorage.setItem("userEmail", user.email);
-      await AsyncStorage.setItem("userName", user.name);
-
+    // Check credentials
+    if (username === "Admin" && password === "admin") {
+      await AsyncStorage.setItem("isAdminLoggedIn", "true");
       router.replace("/");
-    } catch (error) {
-      Alert.alert("Error", "Failed to login. Please try again.");
-    } finally {
-      setLoading(false);
+    } else {
+      Alert.alert("Error", "Invalid credentials");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -81,19 +44,18 @@ export default function Login() {
       style={styles.container}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Login to continue shopping</Text>
+        <Text style={styles.title}>Admin Login</Text>
+        <Text style={styles.subtitle}>Enter admin credentials</Text>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>Username</Text>
             <TextInput
               style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="john@example.com"
+              value={username}
+              onChangeText={setUsername}
+              placeholder="Admin"
               placeholderTextColor="#6B7280"
-              keyboardType="email-address"
               autoCapitalize="none"
               editable={!loading}
             />
@@ -105,10 +67,9 @@ export default function Login() {
               style={styles.input}
               value={password}
               onChangeText={setPassword}
-              placeholder="Enter your password"
+              placeholder="Enter password"
               placeholderTextColor="#6B7280"
               secureTextEntry
-              autoCapitalize="none"
               editable={!loading}
             />
           </View>
@@ -121,24 +82,6 @@ export default function Login() {
             <Text style={styles.loginButtonText}>
               {loading ? "Logging in..." : "Login"}
             </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push("/register")}
-            disabled={loading}
-            style={styles.registerLink}
-          >
-            <Text style={styles.registerLinkText}>
-              Don't have an account? Register
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.back()}
-            disabled={loading}
-            style={styles.backButton}
-          >
-            <Text style={styles.backButtonText}>Back</Text>
           </Pressable>
         </View>
       </View>
@@ -203,23 +146,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
-  },
-  registerLink: {
-    marginTop: 16,
-    paddingVertical: 12,
-  },
-  registerLinkText: {
-    color: "#9CA3AF",
-    textAlign: "center",
-    fontSize: 14,
-  },
-  backButton: {
-    marginTop: 24,
-    paddingVertical: 12,
-  },
-  backButtonText: {
-    color: "#6B7280",
-    textAlign: "center",
-    fontSize: 14,
   },
 });

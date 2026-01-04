@@ -23,10 +23,18 @@ export default function Cart() {
   const router = useRouter();
   const [cart, setCart] = useState<ShoppingCart | null>(null);
   const [showQR, setShowQR] = useState(false);
+  const [orderCompleted, setOrderCompleted] = useState(false);
 
   useEffect(() => {
     loadCart();
   }, []);
+
+  useEffect(() => {
+    // Listen for order completion
+    if (cart && cart.status === "completed" && showQR) {
+      setOrderCompleted(true);
+    }
+  }, [cart?.status]);
 
   const loadCart = async () => {
     const cartId = await AsyncStorage.getItem("currentCartId");
@@ -81,6 +89,36 @@ export default function Cart() {
   };
 
   if (showQR && cart) {
+    // Show order completion message when admin scans
+    if (orderCompleted) {
+      return (
+        <View style={styles.completionContainer}>
+          <View style={styles.successIcon}>
+            <Text style={styles.checkmark}>✓</Text>
+          </View>
+          <Text style={styles.completionTitle}>Order Complete!</Text>
+          <Text style={styles.completionMessage}>
+            Thanks for shopping with us!
+          </Text>
+          <Text style={styles.completionTotal}>
+            Total Paid: €{cart.totalPrice.toFixed(2)}
+          </Text>
+          <Pressable
+            onPress={async () => {
+              setShowQR(false);
+              setOrderCompleted(false);
+              await AsyncStorage.removeItem("currentCartId");
+              router.push("/");
+            }}
+            style={styles.doneButton}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    // Show QR code while waiting for admin to scan
     return (
       <View style={styles.qrContainer}>
         <Text style={styles.qrTitle}>Show to Cashier</Text>
@@ -88,15 +126,15 @@ export default function Cart() {
           <QRCode value={cart.id} size={250} />
         </View>
         <Text style={styles.qrTotal}>Total: €{cart.totalPrice.toFixed(2)}</Text>
+        <Text style={styles.waitingText}>Waiting for checkout...</Text>
         <Pressable
           onPress={async () => {
             setShowQR(false);
-            await AsyncStorage.removeItem("currentCartId");
-            router.push("/");
+            await updateCart(cart.id, { status: "active" });
           }}
-          style={styles.closeButton}
+          style={styles.cancelButton}
         >
-          <Text style={styles.closeButtonText}>Done</Text>
+          <Text style={styles.cancelButtonText}>Cancel Checkout</Text>
         </Pressable>
       </View>
     );
@@ -330,6 +368,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 24,
   },
+  waitingText: {
+    color: "#9CA3AF",
+    fontSize: 16,
+    marginTop: 16,
+    fontStyle: "italic",
+  },
   closeButton: {
     backgroundColor: "#4B5563",
     paddingHorizontal: 24,
@@ -340,5 +384,66 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: "#FFFFFF",
     fontWeight: "600",
+  },
+  cancelButton: {
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  cancelButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  completionContainer: {
+    flex: 1,
+    backgroundColor: "#111827",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+  },
+  successIcon: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#10B981",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  checkmark: {
+    color: "#FFFFFF",
+    fontSize: 64,
+    fontWeight: "bold",
+  },
+  completionTitle: {
+    color: "#FFFFFF",
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 16,
+  },
+  completionMessage: {
+    color: "#9CA3AF",
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  completionTotal: {
+    color: "#10B981",
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 32,
+  },
+  doneButton: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 48,
+    paddingVertical: 16,
+    borderRadius: 8,
+  },
+  doneButtonText: {
+    color: "#111827",
+    fontWeight: "bold",
+    fontSize: 18,
   },
 });

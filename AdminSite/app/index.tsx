@@ -1,9 +1,40 @@
 // @ts-nocheck
 import { Text, View, Pressable, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Index() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const isLoggedIn = await AsyncStorage.getItem("isAdminLoggedIn");
+    if (!isLoggedIn) {
+      router.replace("/login");
+    } else {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem("isAdminLoggedIn");
+    router.replace("/login");
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -26,6 +57,10 @@ export default function Index() {
 
         <Pressable onPress={() => router.push("/orders")} style={styles.button}>
           <Text style={styles.buttonText}>View Orders</Text>
+        </Pressable>
+
+        <Pressable onPress={handleLogout} style={styles.logoutButton}>
+          <Text style={styles.logoutButtonText}>Logout</Text>
         </Pressable>
       </View>
     </View>
@@ -61,6 +96,15 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
+    textAlign: "center",
+  },
+  logoutButton: {
+    marginTop: 24,
+    paddingVertical: 12,
+  },
+  logoutButtonText: {
+    color: "#EF4444",
+    fontSize: 14,
     textAlign: "center",
   },
 });

@@ -5,6 +5,7 @@ export interface Product {
   barcode: string;
   ageRestriction?: number;
   imageUrl?: string;
+  stock?: number;
 }
 
 export interface CartItem {
@@ -26,6 +27,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  password: string;
   dateOfBirth?: Date;
   createdAt: Date;
 }

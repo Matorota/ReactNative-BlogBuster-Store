@@ -78,6 +78,12 @@ export default function Products() {
       return;
     }
 
+    // Check if product is in stock
+    if (product.stock !== undefined && product.stock <= 0) {
+      Alert.alert("Out of Stock", `${product.name} is currently out of stock`);
+      return;
+    }
+
     try {
       const cart = await getCart(cartId);
       if (!cart) {
@@ -91,6 +97,20 @@ export default function Products() {
 
       let newItems: CartItem[];
       if (existingItemIndex >= 0) {
+        const currentQuantity = cart.items[existingItemIndex].quantity;
+
+        // Check if adding one more would exceed stock
+        if (
+          product.stock !== undefined &&
+          currentQuantity + 1 > product.stock
+        ) {
+          Alert.alert(
+            "Stock Limit Reached",
+            `Only ${product.stock} units of ${product.name} available`
+          );
+          return;
+        }
+
         newItems = [...cart.items];
         newItems[existingItemIndex].quantity += 1;
       } else {
@@ -159,6 +179,9 @@ export default function Products() {
                     Age {product.ageRestriction}+
                   </Text>
                 )}
+                {product.stock !== undefined && product.stock <= 0 && (
+                  <Text style={styles.outOfStock}>OUT OF STOCK</Text>
+                )}
               </View>
 
               <View style={styles.productActions}>
@@ -167,9 +190,19 @@ export default function Products() {
                 </Text>
                 <Pressable
                   onPress={() => addToCart(product)}
-                  style={styles.addButton}
+                  style={[
+                    styles.addButton,
+                    product.stock !== undefined &&
+                      product.stock <= 0 &&
+                      styles.addButtonDisabled,
+                  ]}
+                  disabled={product.stock !== undefined && product.stock <= 0}
                 >
-                  <Text style={styles.addButtonText}>Add to Cart</Text>
+                  <Text style={styles.addButtonText}>
+                    {product.stock !== undefined && product.stock <= 0
+                      ? "Out of Stock"
+                      : "Add to Cart"}
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -273,6 +306,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  outOfStock: {
+    color: "#EF4444",
+    fontSize: 12,
+    fontWeight: "bold",
+    marginTop: 4,
+  },
   productActions: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -288,6 +327,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 6,
+  },
+  addButtonDisabled: {
+    backgroundColor: "#4B5563",
+    opacity: 0.6,
   },
   addButtonText: {
     color: "#111827",

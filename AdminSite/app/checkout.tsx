@@ -11,7 +11,12 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState } from "react";
 import { useRouter } from "expo-router";
-import { getCart, updateCart } from "../services/firebase";
+import {
+  getCart,
+  updateCart,
+  createOrder,
+  reduceProductStock,
+} from "../services/firebase";
 import { ShoppingCart } from "../types";
 
 export default function Checkout() {
@@ -75,11 +80,20 @@ export default function Checkout() {
   };
 
   const completeCheckout = async (cartData: ShoppingCart) => {
-    await updateCart(cartData.id, { status: "completed" });
-    Alert.alert(
-      "Checkout Complete",
-      `Total: €${cartData.totalPrice.toFixed(2)}`,
-      [
+    try {
+      // Reduce stock for each product
+      for (const item of cartData.items) {
+        await reduceProductStock(item.product.id, item.quantity);
+      }
+
+      // Create order record
+      await createOrder(cartData);
+
+      // Update cart status to completed
+      await updateCart(cartData.id, { status: "completed" });
+
+      // Show success message
+      Alert.alert("Order Complete", "Order complete, thanks for shopping!", [
         {
           text: "OK",
           onPress: () => {
@@ -89,8 +103,11 @@ export default function Checkout() {
             setShowAgeVerification(false);
           },
         },
-      ]
-    );
+      ]);
+    } catch (error) {
+      Alert.alert("Error", "Failed to complete checkout");
+      setScanned(false);
+    }
   };
 
   const verifyAge = () => {
