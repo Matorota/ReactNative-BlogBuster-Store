@@ -7,9 +7,11 @@ import {
   TextInput,
   StyleSheet,
   Alert,
+  Modal,
 } from "react-native";
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
+import QRCode from "react-native-qrcode-svg";
 import {
   getAllProducts,
   addProduct,
@@ -23,10 +25,12 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [selectedQRCode, setSelectedQRCode] = useState("");
+  const [selectedProductName, setSelectedProductName] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     price: "",
-    barcode: "",
     ageRestriction: "",
     stock: "",
   });
@@ -40,8 +44,15 @@ export default function Products() {
     setProducts(data);
   };
 
+  const generateQRCode = (productName: string): string => {
+    // Generate unique QR code based on product name and timestamp
+    const timestamp = Date.now();
+    const normalized = productName.toLowerCase().replace(/\s+/g, "-");
+    return `PRODUCT_${normalized}_${timestamp}`;
+  };
+
   const handleSubmit = async () => {
-    if (!formData.name || !formData.price || !formData.barcode) {
+    if (!formData.name || !formData.price) {
       Alert.alert("Error", "Fill all required fields");
       return;
     }
@@ -70,10 +81,15 @@ export default function Products() {
       }
     }
 
+    // Generate QR code automatically
+    const qrCode = editingProduct
+      ? editingProduct.qrCode
+      : generateQRCode(formData.name);
+
     const productData = {
       name: formData.name,
       price,
-      barcode: formData.barcode,
+      qrCode,
       ageRestriction,
       stock,
     };
@@ -111,23 +127,22 @@ export default function Products() {
     setFormData({
       name: product.name,
       price: product.price.toString(),
-      barcode: product.barcode,
       ageRestriction: product.ageRestriction?.toString() || "",
       stock: product.stock?.toString() || "",
     });
     setShowForm(true);
   };
 
-  const generateBarcode = () => {
-    const randomBarcode = `BC${Date.now()}${Math.floor(Math.random() * 10000)}`;
-    setFormData({ ...formData, barcode: randomBarcode });
+  const handleViewQRCode = (product: Product) => {
+    setSelectedQRCode(product.qrCode);
+    setSelectedProductName(product.name);
+    setShowQRModal(true);
   };
 
   const resetForm = () => {
     setFormData({
       name: "",
       price: "",
-      barcode: "",
       ageRestriction: "",
       stock: "",
     });
@@ -161,22 +176,6 @@ export default function Products() {
             keyboardType="decimal-pad"
             placeholderTextColor="#6B7280"
           />
-
-          <Text style={styles.label}>Barcode</Text>
-          <View style={styles.barcodeRow}>
-            <TextInput
-              value={formData.barcode}
-              onChangeText={(text: string) =>
-                setFormData({ ...formData, barcode: text })
-              }
-              style={[styles.input, styles.barcodeInput]}
-              placeholder="Enter barcode"
-              placeholderTextColor="#6B7280"
-            />
-            <Pressable onPress={generateBarcode} style={styles.generateButton}>
-              <Text style={styles.generateButtonText}>Generate</Text>
-            </Pressable>
-          </View>
 
           <Text style={styles.label}>Age Restriction (Optional)</Text>
           <TextInput
@@ -227,7 +226,7 @@ export default function Products() {
                 €{product.price.toFixed(2)}
               </Text>
               <Text style={styles.productBarcode}>
-                Barcode: {product.barcode}
+                QR Code: {product.qrCode}
               </Text>
               {product.ageRestriction && (
                 <Text style={styles.productAge}>
@@ -249,6 +248,12 @@ export default function Products() {
 
             <View style={styles.productActions}>
               <Pressable
+                onPress={() => handleViewQRCode(product)}
+                style={styles.viewQRButton}
+              >
+                <Text style={styles.viewQRButtonText}>View QR Code</Text>
+              </Pressable>
+              <Pressable
                 onPress={() => handleEdit(product)}
                 style={styles.editButton}
               >
@@ -264,6 +269,35 @@ export default function Products() {
           </View>
         ))}
       </ScrollView>
+
+      <Modal
+        visible={showQRModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowQRModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{selectedProductName}</Text>
+            <Text style={styles.modalQRText}>QR Code</Text>
+            <View style={styles.qrCodeContainer}>
+              <QRCode
+                value={selectedQRCode}
+                size={250}
+                backgroundColor="white"
+                color="black"
+              />
+            </View>
+            <Text style={styles.qrCodeValue}>{selectedQRCode}</Text>
+            <Pressable
+              onPress={() => setShowQRModal(false)}
+              style={styles.modalCloseButton}
+            >
+              <Text style={styles.modalCloseButtonText}>Close</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <View style={styles.footer}>
         <Pressable onPress={() => setShowForm(true)} style={styles.addButton}>
@@ -301,26 +335,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     fontSize: 16,
-  },
-  barcodeRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-  },
-  barcodeInput: {
-    flex: 1,
-    marginBottom: 0,
-  },
-  generateButton: {
-    backgroundColor: "#3B82F6",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    justifyContent: "center",
-  },
-  generateButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
   },
   saveButton: {
     backgroundColor: "#10B981",
@@ -391,6 +405,17 @@ const styles = StyleSheet.create({
   productActions: {
     flexDirection: "row",
     gap: 8,
+    flexWrap: "wrap",
+  },
+  viewQRButton: {
+    backgroundColor: "#8B5CF6",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  viewQRButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
   },
   editButton: {
     backgroundColor: "#3B82F6",
@@ -436,6 +461,55 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: "#FFFFFF",
     textAlign: "center",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#1F2937",
+    borderRadius: 12,
+    padding: 24,
+    alignItems: "center",
+    width: "90%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  modalQRText: {
+    color: "#9CA3AF",
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  qrCodeContainer: {
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  qrCodeValue: {
+    color: "#6B7280",
+    fontSize: 12,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalCloseButton: {
+    backgroundColor: "#3B82F6",
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  modalCloseButtonText: {
+    color: "#FFFFFF",
     fontWeight: "600",
     fontSize: 16,
   },

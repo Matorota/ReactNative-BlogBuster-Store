@@ -172,7 +172,7 @@ export default function Products() {
               <View style={styles.productInfo}>
                 <Text style={styles.productName}>{product.name}</Text>
                 <Text style={styles.productBarcode}>
-                  Barcode: {product.barcode}
+                  QR Code: {product.qrCode}
                 </Text>
                 {product.ageRestriction && (
                   <Text style={styles.productAge}>

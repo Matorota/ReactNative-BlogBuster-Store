@@ -71,10 +71,10 @@ export const deleteProduct = async (id: string) => {
   await deleteDoc(docRef);
 };
 
-export const getProductByBarcode = async (
-  barcode: string
+export const getProductByQRCode = async (
+  qrCode: string
 ): Promise<Product | null> => {
-  const q = query(productsCollection, where("barcode", "==", barcode));
+  const q = query(productsCollection, where("qrCode", "==", qrCode));
   const snapshot = await getDocs(q);
   if (snapshot.empty) return null;
   const doc = snapshot.docs[0];

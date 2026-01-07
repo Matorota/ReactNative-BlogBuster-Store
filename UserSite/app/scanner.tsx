@@ -3,7 +3,7 @@ import { Text, View, Pressable, Alert, StyleSheet } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useState, useEffect } from "react";
 import { useRouter } from "expo-router";
-import { getProductByBarcode, getCart, updateCart } from "../services/firebase";
+import { getProductByQRCode, getCart, updateCart } from "../services/firebase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ShoppingCart, CartItem } from "../types";
 
@@ -47,7 +47,7 @@ export default function Scanner() {
     setScanned(true);
 
     try {
-      const product = await getProductByBarcode(data);
+      const product = await getProductByQRCode(data);
 
       if (!product) {
         Alert.alert("Product Not Found", "This product is not in our database");
@@ -123,22 +123,13 @@ export default function Scanner() {
         style={StyleSheet.absoluteFillObject}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
-          barcodeTypes: [
-            "qr",
-            "ean13",
-            "ean8",
-            "code128",
-            "code39",
-            "code93",
-            "upc_a",
-            "upc_e",
-          ],
+          barcodeTypes: ["qr"],
         }}
       />
 
       <View style={styles.overlay}>
         <View style={styles.scannerLabel}>
-          <Text style={styles.scannerText}>Scan Product Barcode</Text>
+          <Text style={styles.scannerText}>Scan Product QR Code</Text>
         </View>
       </View>
 
