@@ -5,6 +5,7 @@ Point-of-sale mobile application with customer and admin apps.
 ## What You Need
 
 - Node.js installed
+- IDE or VSC
 - Firebase account
 
 ## Setup
